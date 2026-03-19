@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "econkit"
+version = "0.1.0"
+description = "경제 데이터 수집·처리·분석·시각화 유틸리티"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "requests>=2.28",
+    "plotly>=5.15",
+]
+
+[project.optional-dependencies]
+full = [
+    "scipy>=1.10",
+    "statsmodels>=0.14",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["econkit*"]
