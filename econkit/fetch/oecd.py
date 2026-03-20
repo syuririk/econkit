@@ -133,13 +133,15 @@ def get_data(
     return pivot_df.reset_index().rename(columns={time_col: "date"})
 
 
-def get_dataflow_list(agency: str = "OECD", keyword: Optional[str] = None) -> pd.DataFrame:
+def get_dataflow_list(agency: str = "all", keyword: Optional[str] = None) -> pd.DataFrame:
     """사용 가능한 데이터플로우 목록 조회.
 
     Parameters
     ----------
     agency : str
-        에이전시 ID. 기본값 "OECD".
+        에이전시 ID. 기본값 "all" (전체).
+        OECD는 세부 에이전시(예: OECD.SDD.TPS)를 사용하므로
+        "OECD"로 조회 시 결과가 비거나 404가 발생할 수 있습니다.
     keyword : str, optional
         키워드 필터 (데이터플로우 이름에서 검색).
 
@@ -192,14 +194,21 @@ def get_structure(dataflow: str) -> dict:
     Parameters
     ----------
     dataflow : str
-        데이터플로우 ID.
+        데이터플로우 ID. 예: "OECD.SDD.STES,DSD_STES@DF_CLI"
 
     Returns
     -------
     dict
-        JSON 응답 원본.
+        JSON 응답 원본. 차원, 코드리스트 등 포함.
     """
-    url = f"{BASE_URL}/datastructure/{dataflow}?references=all"
+    # dataflow에서 agency와 id 분리
+    # "OECD.SDD.STES,DSD_STES@DF_CLI" → agency="OECD.SDD.STES", id="DSD_STES@DF_CLI"
+    if "," in dataflow:
+        agency_part, flow_id = dataflow.split(",", 1)
+    else:
+        agency_part, flow_id = "all", dataflow
+
+    url = f"{BASE_URL}/dataflow/{agency_part}/{flow_id}/latest?references=all&detail=referencepartial"
     resp = requests.get(
         url,
         headers={"Accept": "application/vnd.sdmx.structure+json"},
