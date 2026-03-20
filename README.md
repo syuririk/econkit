@@ -99,17 +99,19 @@ OECD SDMX REST API. [OECD Data Explorer](https://data-explorer.oecd.org/)에서 
 ```python
 import econkit
 
-# CLI (경기선행지수) — 한국, 미국, 일본
+# CLI (경기선행지수) — 전체 국가, amplitude adjusted, 월간
+# filter_expr는 OECD Data Explorer > Developer API에서 복사
 df = econkit.fetch.oecd.get_data(
     "OECD.SDD.STES,DSD_STES@DF_CLI",
-    "KOR+USA+JPN.M.LI...AA...H",
+    ".M.LI...AA...H",
     start_period="2020-01",
 )
 
-# GDP — OECD 전체
+# CLI — 한국, 미국만 필터
 df = econkit.fetch.oecd.get_data(
-    "OECD.SDD.NAD,DSD_NAAG@DF_NAAG_I",
-    start_period="2015",
+    "OECD.SDD.STES,DSD_STES@DF_CLI",
+    "KOR+USA.M.LI...AA...H",
+    start_period="2020-01",
 )
 
 # 데이터플로우 검색
@@ -188,7 +190,3 @@ df = econkit.fetch.fred.get_data(
 | `econkit.factors.grouped` | 위 항목 + `parkinson_vol_factor` · `amihud_factor` · `cs_zscore` · `compute` |
 
 ---
-
-## 라이선스
-
-MIT

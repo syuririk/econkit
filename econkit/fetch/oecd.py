@@ -55,8 +55,11 @@ def get_data(
         데이터플로우 ID. 예: "OECD.SDD.STES,DSD_STES@DF_CLI"
         OECD Data Explorer에서 Developer API 버튼으로 확인 가능.
     filter_expr : str
-        차원 필터. 점(.)으로 구분, +로 복수 선택, 빈 값은 전체.
-        예: "KOR+USA+JPN.M.LI...AA...H"
+        차원 필터. OECD Data Explorer의 Developer API에서 복사한 문자열을 그대로 사용.
+        점(.)으로 차원 구분, +로 복수 선택, 빈 차원은 전체 선택.
+        예: ".M.LI...AA...H"  (첫 차원 REF_AREA를 비워 전체 국가)
+        예: "KOR+USA.M.LI...AA...H"  (한국, 미국만)
+        빈 문자열이면 필터 없이 전체 조회.
     start_period : str, optional
         시작 기간. 예: "2020-01", "2020"
     end_period : str, optional
@@ -77,14 +80,18 @@ def get_data(
     Examples
     --------
     >>> import econkit
-    >>> # CLI (경기선행지수) — 한국, 미국, 일본
+    >>> # CLI (경기선행지수) — 전체 국가, amplitude adjusted
     >>> df = econkit.fetch.oecd.get_data(
     ...     "OECD.SDD.STES,DSD_STES@DF_CLI",
-    ...     "KOR+USA+JPN.M.LI...AA...H",
+    ...     ".M.LI...AA...H",
     ...     start_period="2020-01",
     ... )
     """
-    url = f"{BASE_URL}/data/{dataflow}/{filter_expr}"
+    # URL 조립 — filter_expr가 비어있으면 슬래시 없이 바로 쿼리파라미터
+    if filter_expr:
+        url = f"{BASE_URL}/data/{dataflow}/{filter_expr}"
+    else:
+        url = f"{BASE_URL}/data/{dataflow}"
 
     params = {
         "dimensionAtObservation": "AllDimensions",
