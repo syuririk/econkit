@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "econkit"
-version = "0.1.0"
-description = "경제 데이터 수집·처리·분석·시각화 유틸리티"
+version = "0.1.1"
+description = "경제 데이터 유틸리티"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
