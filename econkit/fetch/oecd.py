@@ -148,44 +148,56 @@ def get_dataflow_list(agency: str = "all", keyword: Optional[str] = None) -> pd.
     Returns
     -------
     pd.DataFrame
-        id, agency, name 컬럼 포함.
+        id, agencyID, version, name 컬럼 포함.
     """
     url = f"{BASE_URL}/dataflow/{agency}"
-    resp = requests.get(url, headers={"Accept": "application/vnd.sdmx.structure+csv"})
-
+    resp = requests.get(
+        url,
+        headers={"Accept": "application/vnd.sdmx.structure+json"},
+    )
     if resp.status_code != 200:
-        # CSV 안 되면 JSON 시도
-        resp = requests.get(
-            url,
-            headers={"Accept": "application/vnd.sdmx.structure+json"},
-        )
-        if resp.status_code != 200:
-            raise OecdAPIError(f"HTTP Error {resp.status_code}")
+        raise OecdAPIError(f"HTTP Error {resp.status_code}")
 
-        data = resp.json()
-        flows = []
-        try:
-            for df_item in data["data"]["dataflows"]:
-                flows.append({
-                    "id": df_item.get("id", ""),
-                    "agency": df_item.get("agencyID", ""),
-                    "name": df_item.get("name", ""),
-                    "version": df_item.get("version", ""),
-                })
-        except (KeyError, TypeError):
-            return pd.DataFrame()
+    data = resp.json()
 
-        result = pd.DataFrame(flows)
-    else:
-        result = pd.read_csv(StringIO(resp.text))
+    flows = []
+    try:
+        for item in data["data"]["dataflows"]:
+            # name 필드: 문자열이면 그대로, dict면 영문 우선
+            raw_name = item.get("name", "")
+            if isinstance(raw_name, dict):
+                name = raw_name.get("en", next(iter(raw_name.values()), ""))
+            else:
+                name = raw_name
+
+            raw_desc = item.get("description", "")
+            if isinstance(raw_desc, dict):
+                desc = raw_desc.get("en", next(iter(raw_desc.values()), ""))
+            else:
+                desc = raw_desc
+
+            flows.append({
+                "id": item.get("id", ""),
+                "agencyID": item.get("agencyID", ""),
+                "version": item.get("version", ""),
+                "name": name,
+                "description": desc,
+            })
+    except (KeyError, TypeError):
+        return pd.DataFrame()
+
+    result = pd.DataFrame(flows)
 
     if keyword and not result.empty:
-        mask = result.apply(
-            lambda row: keyword.lower() in str(row).lower(), axis=1,
+        kw = keyword.lower()
+        mask = (
+            result["name"].str.lower().str.contains(kw, na=False)
+            | result["description"].str.lower().str.contains(kw, na=False)
+            | result["id"].str.lower().str.contains(kw, na=False)
         )
         result = result[mask]
 
-    return result
+    return result.reset_index(drop=True)
 
 
 def get_structure(dataflow: str) -> dict:
