@@ -8,6 +8,8 @@ API 기본 URL: https://sdmx.oecd.org/public/rest
 
 from __future__ import annotations
 
+import html as _html
+import re
 from io import StringIO
 from typing import Optional
 
@@ -21,6 +23,19 @@ BASE_URL = "https://sdmx.oecd.org/public/rest"
 class OecdAPIError(Exception):
     """OECD API 호출 에러."""
     pass
+
+
+def _clean_html(raw: str) -> str:
+    """HTML 태그 제거 + 엔티티 변환."""
+    if not raw or not isinstance(raw, str):
+        return ""
+    text = _html.unescape(raw)
+    text = re.sub(r'<br\s*/?>', '\n', text)
+    text = re.sub(r'</p>', '\n', text)
+    text = re.sub(r'</li>', '\n', text)
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
 
 
 def _get_csv(url: str) -> pd.DataFrame:
@@ -181,7 +196,7 @@ def get_dataflow_list(agency: str = "all", keyword: Optional[str] = None) -> pd.
                 "agencyID": item.get("agencyID", ""),
                 "version": item.get("version", ""),
                 "name": name,
-                "description": desc,
+                "description": _clean_html(desc),
             })
     except (KeyError, TypeError):
         return pd.DataFrame()
